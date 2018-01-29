@@ -61,12 +61,6 @@ void login_user(char* username, char* password)
         }
 
         user->failed_logins = 0;
-
-        // Spawn shell
-        if (setuid(user->uid) == 0)
-        {
-            system("/bin/sh");
-        }
     }
     else
     {
@@ -74,6 +68,13 @@ void login_user(char* username, char* password)
     }
     db_write_users(list);
     db_list_free(list);
+
+    // Spawn shell if login successful
+    if (user != NULL)
+    {
+        if (setuid(user->uid) == 0)
+            system("/bin/sh");
+    }
 }
 
 static void signal_handler(int signo)
