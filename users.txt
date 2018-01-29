@@ -1,0 +1,4 @@
+Users in pass.db:
+test:mypass
+olduser:abcdefgh
+john:passw0rd
