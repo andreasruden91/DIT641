@@ -8,7 +8,7 @@
 #include "db.h"
 #include "shared.h"
 
-void login_user(char* username, char* password)
+int login_user(char* username, char* password)
 {
     UserInfoList* list;
     UserInfoNode* itr;
@@ -73,8 +73,13 @@ void login_user(char* username, char* password)
     if (user != NULL)
     {
         if (setuid(user->uid) == 0)
-            system("/bin/sh");
+        {
+            if (system("/bin/sh") == 0)
+                return 0;
+        }
     }
+
+    return 1;
 }
 
 static void signal_handler(int signo)
@@ -86,29 +91,35 @@ int main(void)
 {
     char* username;
     char* password;
+    int login_result;
 
     // Install signal handling for program interruption
     if (signal(SIGINT, signal_handler) == SIG_ERR ||
+        signal(SIGTSTP, signal_handler) == SIG_ERR ||
         signal(SIGQUIT, signal_handler) == SIG_ERR)
     {
         printf("Error: failed to set signal handler\n");
         return 1;
     }
 
-    printf("Login: ");
-    if ((username = readline(32)) == NULL)
+    do
     {
-        printf("Error: Invalid username\n");
-        return 1;
-    }
-    if ((password = getpassword()) == NULL)
-    {
-        printf("Error: Invalid password\n");
-        return 1;
-    }
+        printf("Login: ");
+        if ((username = readline(32)) == NULL)
+        {
+            printf("Error: Invalid username\n");
+            continue;
+        }
+        if ((password = getpassword()) == NULL)
+        {
+            printf("Error: Invalid password\n");
+            free(username);
+            continue;
+        }
 
-    login_user(username, password);
+        login_result = login_user(username, password);
 
-    free(username);
-    free(password);
+        free(username);
+        free(password);
+    } while (login_result != 0);
 }
